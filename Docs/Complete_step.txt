@@ -140,4 +140,113 @@ Purpose:
 Input Bucket -> s3:GetObject -> Lambda
 Lambda -> s3:PutObject -> Output Bucket
 
+Create Lambda Function
+Navigate to:
+AWS Console -> Lambda -> Functions -> Create function
+Select:
+Author from scratch
+Function name:
+image-resizer
+Runtime:
+Python 3.12
+Architecture:
+x86_64
+Under permissions select:
+Use an existing role
+Select:
+image-resizer-lambda-role
+Click Create function
+
+Step 7 - Test Lambda Without Pillow
+Before adding Pillow, verify that Lambda itself works.
+Replace the default Lambda code with:
+
+def lambda_handler(event, context):
+    print("Lambda function is working!")
+    return {
+    "statusCode": 200,
+    "body": "Success"
+    }
+
+Click Deploy.
+Then click Test.
+Create a test event:
+{}
+Run the test.
+Expected output:
+Lambda function is working!
+
+Step 8 - Understand Pillow
+Pillow is a Python imaging library.
+It provides functionality for:
+* Opening images
+* Resizing images
+* Cropping images
+* Rotating images
+* Converting image formats
+* Editing images
+* Saving processed images
+In this project, Pillow is used to resize uploaded images.
+Example:
+Original Image
+1920 x 1080
+     |
+     v
+300 x 300
+Lambda does not automatically include Pillow, so Pillow must be provided as a dependency.
+
+Step 9 - Create Pillow Lambda Layer
+We will use a Lambda Layer to provide Pillow.
+Create the following directory:
+pillow-layer/
+The python directory must be at the root of the ZIP file.
+
+correct structure
+pillow-layer.zip
+python/
+    PIL/
+    Pillow-*.dist-info/
+
+Step 10 - Package Pillow
+A terminal is not required for the AWS architecture itself.
+The terminal is used to package the Pillow dependency.
+Because Pillow contains native components, the dependency should be built for an environment compatible with the Lambda runtime and architecture.
+
+Using the AWS Lambda Python 3.12 container is one approach.
+Create the directory:
+
+mkdir pillow-layer
+cd pillow-layer
+mkdir python
+
+Build the dependency:
+docker run –rm 
+-v “$PWD”:/var/task 
+public.ecr.aws/lambda/python:3.12 
+/bin/bash -c “pip install Pillow -t python/”
+
+Verify:
+ls python
+
+Expected:
+PIL
+Pillow-*.dist-info
+
+Create the ZIP file:
+zip -r pillow-layer.zip python/
+
+Step 11 - Create Lambda Layer
+Navigate to:
+AWS Console -> Lambda -> Layers -> Create layer
+Layer name:
+pillow-layer
+Select:
+Upload a .zip file
+Upload:
+pillow-layer.zip
+Compatible runtime:
+Python 3.12
+Architecture:
+x86_64
+Click Create.
 
