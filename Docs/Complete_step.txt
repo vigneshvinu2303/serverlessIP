@@ -250,3 +250,40 @@ Architecture:
 x86_64
 Click Create.
 
+Step 12 - Attach Pillow Layer to Lambda
+
+Open:
+Lambda -> Functions -> image-resizer
+Find:
+Layers
+Click:
+Add a layer
+Select:
+Custom layers
+Choose:
+pillow-layer
+Select the layer version.
+Click Add.
+Lambda now contains:
+Lambda Function
+  lambda_function.py
+  Pillow Layer
+    PIL
+
+Step 13 - Test Pillow
+Use the following temporary code:
+
+from PIL import Image
+def lambda_handler(event, context):
+  image = Image.new("RGB", (300, 300), "blue")
+  print("Pillow is working!")
+  return {
+    "statusCode": 200,
+    "body": "Pillow successfully loaded"
+}
+Click:
+Deploy -> Test
+Expected log:
+Pillow is working!
+
+If this test succeeds, the Pillow Layer is working.
