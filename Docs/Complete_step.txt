@@ -1,1 +1,143 @@
 
++--------------—————-+--------------—————-+
+| Service            |       Purpose      |
++--------------—————-+--------------—————-+
+|   Amazon S3        | Stores input and   |
+|                    |   processed images |
+|   AWS Lambda       | Processes images   |       |                    |   automatically    |
+|   AWS IAM          | Controls Lambda    |
+|                    |    permission      | 
+|   Amazon CloudWatch| Stores Lambda      |
+|                    |  execution logs    |
+|   Lambda Layer     | Provides Pillow    |
+|                    |  dependency        |
++-------------—————--+--------------—————-+
+2. Technologies
+
+* Python 3.12
+* Pillow
+* Amazon S3
+* AWS Lambda
+* AWS IAM
+* Amazon CloudWatch
+* Serverless Architecture
+* Event-Driven Architecture
+
+3. Prerequisites
+
+Before starting:
+
+* AWS account
+* AWS Console access
+* Basic Python knowledge
+* Basic understanding of AWS S3 and Lambda
+* GitHub account
+
+The initial deployment can be performed using the AWS Management Console.
+
+A terminal is only required when packaging the Pillow dependency manually.
+
+Step 1 - Select AWS Region
+1. Log in to the AWS Management Console.
+2. Select an AWS region.
+
+Example:
+Asia Pacific (Mumbai)
+ap-south-1
+
+Use the same region for S3 and Lambda.
+
+Step 2 - Create Input S3 Bucket
+Navigate to:
+AWS Console -> S3 -> Create bucket
+Create a globally unique bucket name.
+
+Example:
+vignesh-image-input-2026
+
+Recommended settings:
+* Object Ownership: ACLs disabled
+* Block Public Access: Enabled
+
+Keep other settings as default.
+Click Create bucket.
+Purpose:
+The Input S3 Bucket receives the original images.
+
+Step 3 - Create Output S3 Bucket
+Create another S3 bucket.
+Example:
+vignesh-image-output-2026
+Recommended setting:
+Block Public Access: Enabled
+Click Create bucket.
+Purpose:
+The Output S3 Bucket stores the processed/resized images.
+
+Why two buckets?
+The input bucket triggers Lambda.
+The output bucket stores the processed image.
+Using two buckets helps prevent recursive Lambda invocations.
+
+If Lambda writes the processed image back to the same bucket that triggers the Lambda function, the new object can trigger Lambda again.
+
+Step 4: Create IAM Role
+
+Navigate to:
+AWS Console -> IAM -> Roles -> Create role
+
+Select:
+Trusted entity type: AWS service
+
+Use case: Lambda
+Click Next.
+Attach:
+AWSLambdaBasicExecutionRole
+
+This allows Lambda to write logs to CloudWatch.
+Create the role:
+image-resizer-lambda-role
+
+Step 5 - Add S3 Permissions
+Open:
+IAM -> Roles -> image-resizer-lambda-role
+Select:
+Permissions -> Add permissions -> Create inline policy
+
+Choose JSON.
+Add:
+{
+“Version”: “2012-10-17”,
+“Statement”: [
+              {
+                “Effect”: “Allow”,
+                 “Action”: [
+                             “s3:GetObject”
+                          ],
+                “Resource”:  “arn:aws:s3:::YOURINPUT-BUCKET/”
+            },
+            {
+              “Effect”: “Allow”,
+              “Action”: [
+                          “s3:PutObject”
+                       ],
+              “Resource”: “arn:aws:s3:::YOUR-OUTPUT-BUCKET/”
+           }
+       ]
+}
+
+Replace:
+YOUR-INPUT-BUCKET
+and
+YOUR-OUTPUT-BUCKET
+with the actual bucket names.
+
+Example:
+vignesh-image-input-2026
+vignesh-image-output-2026
+
+Purpose:
+Input Bucket -> s3:GetObject -> Lambda
+Lambda -> s3:PutObject -> Output Bucket
+
+
